@@ -1,3 +1,5 @@
 # Requirements for the local env
 # Inherit from test and base
 -r test.txt
+
+ipython==7.5.0

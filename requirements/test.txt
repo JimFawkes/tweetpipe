@@ -1,2 +1,7 @@
 # Requirements to run tests (Local or CI)
 -r base.txt	
+
+bandit==1.6.0
+black==19.3b0
+pylama==7.7.1
+pytest==4.6.2
