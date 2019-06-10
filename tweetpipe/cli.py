@@ -6,6 +6,9 @@ import argparse
 import sys
 from loguru import logger
 
+from config import settings
+from extract import get_tweet_data
+
 # from config import Config
 
 _log_file_name = __file__.split("/")[-1].split(".")[0]
@@ -39,9 +42,15 @@ parser.add_argument("--count", "-c", help="Nuber of recent tweets to retrieve", 
 # parser.add_argument("--read_from_s3", help="Read data from local file, clean, validate and store the data.", type=str)
 
 
+def extract(userhandle, count, upload_to_s3=True):
+    """Fetch tweets from api, convert it to json, upload to s3"""
+    json_tweets = get_tweet_data(userhandle, count, upload_to_s3)
+    return json_tweets
+
+
 def run_pipeline(userhandle, count):
-    logger.warning(f"NOT YET IMPLEMENTED")
-    logger.debug(f"Fetch last {count} tweets for '{userhandle}'")
+    logger.debug(f"Extract last {count} tweets for '{userhandle}'")
+    json_tweets = extract(userhandle, count)
 
 
 def main():
