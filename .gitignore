@@ -103,6 +103,10 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# Logs & data
+logs/
+data/
+
 # VS Code
 .vscode/
 
