@@ -3,4 +3,5 @@
 boto3==1.9.164
 Django==2.2.2
 loguru==0.2.5
+python-dotenv==0.10.3
 tweepy==3.7.0
