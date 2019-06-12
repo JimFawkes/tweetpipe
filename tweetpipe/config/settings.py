@@ -1,3 +1,10 @@
+"""
+Configure the project and django.
+
+Read secrets from a .env file.
+Define project wide settings e.g., time formats.
+
+"""
 import os
 from dotenv import load_dotenv
 from pathlib import Path
@@ -13,10 +20,16 @@ ENV_PATH = CONFIG_DIR / ".env"
 load_dotenv(dotenv_path=ENV_PATH)
 
 # DJANGO
+if os.getenv("DJANGO_MANAGEMENT_SCRIPT", default=False):
+    # NOTE: This is necessary to get Django Migrations to run.
+    # The variable is set in the manage.py script
+    INSTALLED_APPS = ["tweetpipe"]
+
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 TIME_ZONE = "Europe/Berlin"
 USE_TZ = True
 TIME_STRING_FORMAT = "%Y%m%d-%H%M%S%z"
+DEFAULT_DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S%Z"
 
 DATABASES = {
     "default": {
@@ -28,7 +41,6 @@ DATABASES = {
         "PORT": os.getenv("DB_PORT", default="5432"),
     }
 }
-
 
 # TWITTER
 TWITTER_CONSUMER_KEY = os.getenv("TWITTER_CONSUMER_KEY")
