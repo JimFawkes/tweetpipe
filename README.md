@@ -17,6 +17,7 @@
 
 ## Version 1
 *June 12th, 2019*
+See tag: [2019-06-12-v1](https://github.com/JimFawkes/tweetpipe/tree/2019-06-12-v1)
 
 ### Setup:
  1) Install requirements `pip install -r requirements/prod.txt` (*Run in appropriate ENV e.g., virtualenv*)
