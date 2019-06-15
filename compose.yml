@@ -1,0 +1,29 @@
+version: "3"
+
+# networks:
+#   default:
+#     name: tweetpipe_nw
+
+services:
+  tweetpipe:
+    build:
+      context: .
+      dockerfile: ./compose/tweetpipe/Dockerfile
+    image: tweetpipe
+    depends_on:
+      - tweetpipe_db
+    volumes:
+      - ./tweetpipe:/app/tweetpipe/tweetpipe
+    env_file:
+      - ./tweetpipe/config/.env
+
+  tweetpipe_db:
+    build:
+      context: .
+      dockerfile: ./compose/postgres/Dockerfile
+    image: tweetpipe_db
+    volumes:
+      - ~/Data/tweetpipe/data:/var/lib/postgresql/data
+      - ~/Data/tweetpipe/backups:/backups
+    env_file:
+      - ./tweetpipe/config/.env
