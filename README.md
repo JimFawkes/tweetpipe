@@ -14,7 +14,24 @@
  - schema migrations
  - build any sql aggregate and display result after persisting
 
+_____________ 
+## Version 2
 
+### Setup:
+ 1) Clone repository   
+ 1) Setup PostgrSQL DB
+ 1) Setup AWS S3 bucket
+ 1) Enter secrets in .env file (see [.example.env](tweetpipe/config/.example.env))
+ 1) Run DB migrations `python manage.py migrate`
+ 1) source setup.py: `. setup.py`
+
+### Run the application:
+Process the last 10 tweets of [contentful](https://twitter.com/contentful).
+```bash
+$ tweetpipe --user contentful --count 10
+```
+
+_____________ 
 ## Version 1
 *June 12th, 2019*
 See tag: [2019-06-12-v1](https://github.com/JimFawkes/tweetpipe/tree/2019-06-12-v1)
