@@ -14,7 +14,7 @@ django.setup()
 from config import settings
 from extract import get_tweet_data
 from load import load_data
-from storage import S3
+from storage import S3, LocalFileSystem
 from transform import get_transformed_data
 
 _log_file_name = __file__.split("/")[-1].split(".")[0]
@@ -43,6 +43,7 @@ epilog = """
 Written as first draft by Moritz Eilfort.
 
 """
+STORAGE_CHOICES = {"s3": S3, "local": LocalFileSystem}
 
 parser = argparse.ArgumentParser(
     prog="tweetpipe",
@@ -56,18 +57,33 @@ parser.add_argument(
 )
 
 parser.add_argument(
-    "--count", "-c", help="nuber of recent tweets to retrieve", type=int, default=5
+    "--count",
+    "-c",
+    help="nuber of recent tweets to retrieve",
+    type=int,
+    default=5,
 )
 
 parser.add_argument(
     "--list",
     "-l",
     action="store_true",
-    help="list all retrieved files stored in S3 for a given username",
+    help="list all files stored in the specified storage location (default: S3)",
 )
 
 parser.add_argument(
-    "--rerun_file", help="re-process and store data from a file stored in S3", type=str
+    "--storage",
+    "-s",
+    default=STORAGE_CHOICES[settings.DEFAULT_STORAGE_SYSTEM],
+    nargs="?",
+    choices=STORAGE_CHOICES,
+    help=f"select a storage location for raw data (default: {settings.DEFAULT_STORAGE_SYSTEM})",
+)
+
+parser.add_argument(
+    "--rerun_file",
+    help="re-process and store data from a file stored in S3",
+    type=str,
 )
 
 # Do not upload fetched tweets to s3
@@ -77,17 +93,17 @@ parser.add_argument(
 # parser.add_argument("--read_from_s3", help="Read data from local file, clean, validate and store the data.", type=str)
 
 
-def list_files(username):
+def list_files(username, storage_system):
     """
     List all files stored in S3 for a given username.
 
     If the username is omitted, list all files in the S3 bucket.
     """
     logger.debug(f"List files for {username}")
-    s3 = S3()
-    username, key_count, keys = s3.list(username)
+    storage = storage_system()
+    username, key_count, keys = storage.list(username)
     print("\n###############################################")
-    print(f"Found {key_count} files for username: {username}")
+    print(f"Found {key_count} file(s) for username: {username}")
     print("###############################################\n")
     for key in keys:
         print(key)
@@ -108,30 +124,30 @@ def transform(json_data):
     return transformed_data
 
 
-def extract(userhandle, count, upload_to_s3=True):
-    """Fetch tweets from api, convert it to json, upload to s3"""
-    json_tweets = get_tweet_data(userhandle, count, upload_to_s3)
+def extract(userhandle, count, storage_system):
+    """Fetch tweets from api, convert it to json, and store it"""
+    json_tweets = get_tweet_data(userhandle, count, storage_system)
     return json_tweets
 
 
-def rerun_pipeline(filename):
+def rerun_pipeline(filename, storage_system):
     """
     Run pipelien using previously fetched data
 
-    Read content of a file with filename stored in S3
+    Read content of a file with filename stored
     and continue with the transformation phase.
     """
     logger.debug(f"Rerun data from file: {filename}")
-    s3 = S3()
-    json_tweets = s3.read(filename)
+    storage = storage_system()
+    json_tweets = storage.read(filename)
     transformed_data = transform(json_tweets)
     results = load(transformed_data)
 
 
-def run_pipeline(userhandle, count):
+def run_pipeline(userhandle, count, storage_system):
     """Run the entire Extract, Transform and Load Pipeline"""
     logger.debug(f"Extract last {count} tweets for '{userhandle}'")
-    json_tweets = extract(userhandle, count)
+    json_tweets = extract(userhandle, count, storage_system)
     transformed_data = transform(json_tweets)
     results = load(transformed_data)
 
@@ -139,15 +155,16 @@ def run_pipeline(userhandle, count):
 def main():
     args = parser.parse_args()
     logger.debug(f"Starting TweetPipe")
+    storage_system = STORAGE_CHOICES[args.storage]
 
     if args.list:
         username = args.user_handle or ""
         logger.debug(f"Username:{username}")
-        list_files(username)
+        list_files(username, storage_system)
     elif args.rerun_file:
-        rerun_pipeline(str(args.rerun_file))
+        rerun_pipeline(args.rerun_file, storage_system)
     elif args.user_handle:
-        run_pipeline(args.user_handle, int(args.count))
+        run_pipeline(args.user_handle, args.count, storage_system)
     else:
         parser.print_help()
 

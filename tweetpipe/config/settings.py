@@ -9,13 +9,25 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 
+
+def create_dir_if_missing(directory):
+    if not directory.exists():
+        directory.mkdir(parents=True, exist_ok=True)
+
+
 ROOT_DIR = Path(".")
 PROJECT_DIR = ROOT_DIR / "tweetpipe"
 CONFIG_DIR = PROJECT_DIR / "config"
 LOG_DIR = ROOT_DIR / "logs"
 DATA_DIR = ROOT_DIR / "data"
+LOCAL_STORAGE_DIR = DATA_DIR / "local"
 TEST_DIR = ROOT_DIR / "tests"
 ENV_PATH = CONFIG_DIR / ".env"
+
+# If these directories are missing, create them
+create_dir_if_missing(LOG_DIR)
+create_dir_if_missing(DATA_DIR)
+create_dir_if_missing(LOCAL_STORAGE_DIR)
 
 load_dotenv(dotenv_path=ENV_PATH)
 
@@ -24,6 +36,8 @@ if os.getenv("DJANGO_MANAGEMENT_SCRIPT", default=False):
     # NOTE: This is necessary to get Django Migrations to run.
     # The variable is set in the manage.py script
     INSTALLED_APPS = ["tweetpipe"]
+
+DEFAULT_STORAGE_SYSTEM = os.getenv("DEFAULT_STORAGE_SYSTEM", default="s3")
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 TIME_ZONE = "Europe/Berlin"

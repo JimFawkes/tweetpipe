@@ -15,9 +15,9 @@ export TP_DIR="$TP_BASE_DIR/tweetpipe"
 
 TP_DOCKER_BASH_HISTORY="$TP_BASE_DIR/data/docker.bash_history"
 touch $TP_DOCKER_BASH_HISTORY
-TP_BASE_VOLUMES="-v \"$TP_DIR:/app/tweetpipe/tweetpipe\" -v \"$TP_BASE_DIR/logs:/app/tweetpipe/logs\""
-: ${TP_IMAGE:="jimfawkes/tweetpipe:dev"}
-: ${TP_ENV_FILE:="--env-file $TP_DIR/config/.env"}
+TP_BASE_VOLUMES="-v \"$TP_DIR:/app/tweetpipe/tweetpipe\" -v \"$TP_BASE_DIR/logs:/app/tweetpipe/logs\"" -v \"$TP_BASE_DIR/data:/app/tweetpipe/data\""
+TP_IMAGE="jimfawkes/tweetpipe"
+TP_ENV_FILE="--env-file $TP_DIR/config/.env"
 
 # Convenient aliases
 alias current_env="echo \"$PROJECT_NAME\""
@@ -28,7 +28,16 @@ alias $PROJECT_NAME="docker run -it \
         -v "$TP_DOCKER_BASH_HISTORY:/root/.bash_history" \
         $TP_ENV_FILE \
         --rm \
-        $TP_IMAGE\
+        $TP_IMAGE:latest\
+"
+
+DEV_ALIAS_NAME="$PROJECT_NAME"_dev
+alias $DEV_ALIAS_NAME="docker run -it \
+        $TP_BASE_VOLUMES \
+        -v "$TP_DOCKER_BASH_HISTORY:/root/.bash_history" \
+        $TP_ENV_FILE \
+        --rm \
+        $TP_IMAGE:dev\
 "
 
 BASH_ALIAS_NAME="$PROJECT_NAME"_bash

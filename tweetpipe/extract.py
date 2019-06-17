@@ -14,7 +14,6 @@ from loguru import logger
 from django.utils import timezone
 
 from config import settings
-from storage import S3
 import utils
 
 # from config import Config
@@ -23,7 +22,7 @@ logger.add(f"logs/tweetpipe_{_log_file_name}.log", rotation="1 day")
 
 
 class Tweets:
-    def __init__(self, username, count):
+    def __init__(self, username, count, storage_system):
         self._tweet_mode = "extended"
         self._json_indent = 2  # Might want to move this to settings
         self._api = self._auth()
@@ -32,7 +31,7 @@ class Tweets:
         self.count = count
         self.user = self.get_user()
 
-        self.s3 = S3()
+        self.storage = storage_system()
 
     def _auth(self):
         """Authenticate with Twitter and return a tweepy API inst."""
@@ -80,22 +79,26 @@ class Tweets:
     def filename(self):
         return f"{self.username}/{utils.datetime_to_string_format(self.fetched_at)}.json"
 
-    def upload(self):
-        """Convinience method wrapping storage.s3.upload"""
-        logger.debug(f"Uploading tweets to S3 with filename {self.filename}.")
-        self.s3.upload(self.filename, self.json_tweets)
+    def write(self):
+        """Convinience method wrapping storage.write"""
+        logger.debug(f"Write tweets to storage with filename {self.filename}.")
+        self.storage.write(self.filename, self.json_tweets)
 
 
-def get_tweet_data(username, count, upload_to_s3=True):
+def get_tweet_data(username, count, storage_system):
     """
     Entry function to extract count tweets from username
 
-    If upload_to_s3 is set to True, upload the raw file with appended
-    metadata to S3.
+        username: str
+        count: int
+        storage: storage class (storage.[S3|LocalFileSystem])
+
+    If storage is set, store the raw file with appended
+    metadata.
     """
-    tweets = Tweets(username=username, count=count)
+    tweets = Tweets(username=username, count=count, storage_system=storage_system)
     tweets.fetch()
     json_tweets = tweets.convert_tweets_to_json()
-    if upload_to_s3:
-        tweets.upload()
+    if storage_system:
+        tweets.write()
     return json_tweets
