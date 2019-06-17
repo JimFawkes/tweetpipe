@@ -29,12 +29,12 @@ and store it in a DB.
 
 The steps are:
     1) Get last 'count' tweets of user ('user_handle')
-    2) Store the data along with metadata in an S3 Bucket
+    2) Store the data along with metadata in a file (locally or on S3)
     3) Transform the raw data
     4) Store transformed data in the DB
 
-In addition to the base process, it is also possible to list all files stored in S3 and to
-re-run the pipeline using the data in S3 instead of newly fetched data.
+In addition to the base process, it is also possible to list all saved raw files and to
+re-run the pipeline using the data from the file storage instead of newly fetched data.
 
 """
 

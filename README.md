@@ -17,6 +17,11 @@
 _____________ 
 ## Version 2
 
+### Changelog:
+ 1) Dockerize the application: [jimfawkes/tweetpipe:latest](https://hub.docker.com/r/jimfawkes/tweetpipe)
+ 1) Add setup.sh to simplify running the containers
+ 1) Add new argument `--storage` to select between AWS S3 and local file system
+
 ### Setup:
  1) Clone repository   
  1) Setup PostgrSQL DB
@@ -29,6 +34,43 @@ _____________
 Process the last 10 tweets of [contentful](https://twitter.com/contentful).
 ```bash
 $ tweetpipe --user contentful --count 10
+```
+
+More Info can be found by running the following:
+```bash
+$ python tweetpipe --help
+
+usage: tweetpipe [-h] [--user_handle USER_HANDLE] [--count COUNT] [--list]
+                 [--storage [{s3,local}]] [--rerun_file RERUN_FILE]
+
+Project TweetPipe - A Contentful Challenge
+
+Retrieve twitter data for a given username, transform the data
+and store it in a DB.
+
+The steps are:
+    1) Get last 'count' tweets of user ('user_handle')
+    2) Store the data along with metadata in a file (locally or on S3)
+    3) Transform the raw data
+    4) Store transformed data in the DB
+
+In addition to the base process, it is also possible to list all saved raw files and to
+re-run the pipeline using the data from the file storage instead of newly fetched data.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --user_handle USER_HANDLE, -u USER_HANDLE
+                        twitter user handle (@'handle')
+  --count COUNT, -c COUNT
+                        nuber of recent tweets to retrieve
+  --list, -l            list all files stored in the specified storage
+                        location (default: S3)
+  --storage [{s3,local}], -s [{s3,local}]
+                        select a storage location for raw data (default: s3)
+  --rerun_file RERUN_FILE
+                        re-process and store data from a file stored in S3
+
+Written as first draft by Moritz Eilfort.
 ```
 
 _____________ 

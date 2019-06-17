@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Set a environment specific variables and create
+# aliases to abstract the docker commands
+
 PROJECT_NAME="tweetpipe"
 
 # Get the current dir.
