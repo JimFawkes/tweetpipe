@@ -2,11 +2,11 @@
 *Start June 10th, 2019*
 
 ## Tasks:
- - Write a tool that accepts a twitter username X and a tweet count N as 
+ - Write a tool that accepts a twitter username X and a tweet count N as
  parameters and fetches the last N tweets of user X.
 
  - Persist the data.
-  
+
  - Check your code into Github and sent the link before you come onside
 
 **Bonus:**
@@ -14,21 +14,21 @@
  - schema migrations
  - build any sql aggregate and display result after persisting
 
-_____________ 
+_____________
 ## Version 2
 
 ### Changelog:
- 1) Dockerize the application: [jimfawkes/tweetpipe:latest](https://hub.docker.com/r/jimfawkes/tweetpipe)
- 1) Add setup.sh to simplify running the containers
- 1) Add new argument `--storage` to select between AWS S3 and local file system
+ 1. Dockerize the application: [jimfawkes/tweetpipe:latest](https://hub.docker.com/r/jimfawkes/tweetpipe)
+ 1. Add setup.sh to simplify running the containers
+ 1. Add new argument `--storage` to select between AWS S3 and local file system
 
 ### Setup:
- 1) Clone repository   
- 1) Setup PostgrSQL DB
- 1) Setup AWS S3 bucket
- 1) Enter secrets in .env file (see [.example.env](tweetpipe/config/.example.env))
- 1) Run DB migrations `python manage.py migrate`
- 1) source setup.py: `. setup.py`
+ 1. Clone repository
+ 1. Setup PostgrSQL DB
+ 1. Setup AWS S3 bucket
+ 1. Enter secrets in .env file (see [.example.env](tweetpipe/config/.example.env))
+ 1. Run DB migrations `python manage.py migrate`
+ 1. source setup.py: `. setup.py`
 
 ### Run the application:
 Process the last 10 tweets of [contentful](https://twitter.com/contentful).
@@ -73,17 +73,17 @@ optional arguments:
 Written as first draft by Moritz Eilfort.
 ```
 
-_____________ 
+_____________
 ## Version 1
 *June 12th, 2019*
 See tag: [2019-06-12-v1](https://github.com/JimFawkes/tweetpipe/tree/2019-06-12-v1)
 
 ### Setup:
- 1) Install requirements `pip install -r requirements/prod.txt` (*Run in appropriate ENV e.g., virtualenv*)
- 1) Setup PostgrSQL DB
- 1) Setup AWS S3 bucket
- 1) Enter secrets in .env file (see [.example.env](tweetpipe/config/.example.env))
- 1) Run DB migrations `python manage.py migrate`
+ 1. Install requirements `pip install -r requirements/prod.txt` (*Run in appropriate ENV e.g., virtualenv*)
+ 1. Setup PostgrSQL DB
+ 1. Setup AWS S3 bucket
+ 1. Enter secrets in .env file (see [.example.env](tweetpipe/config/.example.env))
+ 1. Run DB migrations `python manage.py migrate`
 
 ### Run the application:
 Process the last 10 tweets of [contentful](https://twitter.com/contentful).
