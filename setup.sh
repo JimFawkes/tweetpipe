@@ -18,7 +18,7 @@ export TP_DIR="$TP_BASE_DIR/tweetpipe"
 
 TP_DOCKER_BASH_HISTORY="$TP_BASE_DIR/data/docker.bash_history"
 touch $TP_DOCKER_BASH_HISTORY
-TP_BASE_VOLUMES="-v \"$TP_DIR:/app/tweetpipe/tweetpipe\" -v \"$TP_BASE_DIR/logs:/app/tweetpipe/logs\"" -v \"$TP_BASE_DIR/data:/app/tweetpipe/data\""
+TP_BASE_VOLUMES="-v \"$TP_DIR:/app/tweetpipe/tweetpipe\" -v \"$TP_BASE_DIR/logs:/app/tweetpipe/logs\" -v \"$TP_BASE_DIR/data:/app/tweetpipe/data\""
 TP_IMAGE="jimfawkes/tweetpipe"
 TP_ENV_FILE="--env-file $TP_DIR/config/.env"
 
