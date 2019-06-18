@@ -12,12 +12,19 @@ from config import settings
 
 
 class BaseStorage:
+    """
+    Base Class for all file storage systems.
+
+    The api expects to get and returns python dictionaries.
+    """
+
     def __init__(self):
         logger.info(f"Using {self.__class__.__name__} as storage")
+        self.json_indent = 2
 
-    def write(self, filename, body):
+    def write(self, filename, data):
         raise NotImplementedError(
-            f"{self.__class__.__name__}.write(filename, body) Not Implemented."
+            f"{self.__class__.__name__}.write(filename, data) Not Implemented."
         )
 
     def list(self, username):
@@ -29,6 +36,14 @@ class BaseStorage:
         raise NotImplementedError(
             f"{self.__class__.__name__}.read(filename) Not Implemented."
         )
+
+    def dict2json(self, data_dict):
+        data_json = json.dumps(data_dict, indent=self.json_indent)
+        return data_json
+
+    def json2dict(self, data_json):
+        data_dict = json.loads(data_json)
+        return data_dict
 
 
 class S3(BaseStorage):
@@ -48,10 +63,11 @@ class S3(BaseStorage):
         )
         return client
 
-    def write(self, filename, body):
-        """Write body to file with filename in S3 Bucket"""
+    def write(self, filename, data):
+        """Write data to file with filename in S3 Bucket"""
+        json_data = self.dict2json(data)
         response = self._client.put_object(
-            Bucket=self.bucket_name, Body=body, Key=filename
+            Bucket=self.bucket_name, Body=json_data, Key=filename
         )
         if not response["ResponseMetadata"]["HTTPStatusCode"] == 200:
             logger.warning(response)
@@ -77,7 +93,7 @@ class S3(BaseStorage):
             Bucket=self.bucket_name, Key=filename
         )
         data = response["Body"].read()
-        return data
+        return self.json2dict(data)
 
 
 class LocalFileSystem(BaseStorage):
@@ -85,18 +101,18 @@ class LocalFileSystem(BaseStorage):
         super().__init__()
         self.data_dir = settings.LOCAL_STORAGE_DIR
 
-    def write(self, filename, body):
-        """Write body to filename in local data_dir"""
+    def write(self, filename, data):
+        """Write data to filename in local data_dir"""
         try:
             with open(self.data_dir / filename, "w") as f:
-                json.dump(body, f)
+                json.dump(data, f, indent=self.json_indent)
         except FileNotFoundError:
             # Create subdir in data dir
             subdirs = filename.rsplit("/", 1)[0]
             new_dir = self.data_dir / subdirs
             new_dir.mkdir(exist_ok=True)
             with open(self.data_dir / filename, "w") as f:
-                json.dump(body, f)
+                json.dump(data, f, indent=self.json_indent)
 
     def list(self, username=None):
         """List files in local data_dir"""
@@ -104,7 +120,7 @@ class LocalFileSystem(BaseStorage):
         files = []
         for file_ in self.data_dir.glob(f"*{username}*/*"):
             if file_.is_file():
-                file_ = str(file_).split("/", 1)[-1]
+                file_ = str(file_).split("/", 2)[-1]
                 files.append(file_)
         return username, len(files), files
 

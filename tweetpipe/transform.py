@@ -6,7 +6,6 @@ the corresponding ModelParsers.
 
 The machinery for the ModelParser can be found in core.py
 """
-import json
 from loguru import logger
 
 import utils
@@ -18,10 +17,9 @@ logger.add(f"logs/tweetpipe_{_log_file_name}.log", rotation="1 day")
 
 
 class TweetPipeParser:
-    def __init__(self, json_tweets):
-        raw = json.loads(json_tweets)
-        self.metadata = raw.pop("metadata")
-        self.raw_tweets = raw.pop("tweets")
+    def __init__(self, data):
+        self.metadata = data.pop("metadata")
+        self.raw_tweets = data.pop("tweets")
 
     def process(self):
         """Process the raw data and pass chuncks onto the corresponding ModelParsers"""
@@ -47,7 +45,10 @@ class BaseModelParser(ModelParser):
     def __init__(self):
         super().__init__()
         self.field_transformations = {
-            **{"created_at": self.transform_datetime, "fetched_at": self.transform_datetime},
+            **{
+                "created_at": self.transform_datetime,
+                "fetched_at": self.transform_datetime,
+            },
             **self.field_transformations,
         }
 
@@ -81,7 +82,7 @@ class TweetParser(BaseModelParser):
         return str(full_text)
 
 
-def get_transformed_data(json_data):
+def get_transformed_data(data):
     """Entry function to run the main TweetPipeParser and transform the raw data"""
-    parser = TweetPipeParser(json_data)
+    parser = TweetPipeParser(data)
     return parser.process()

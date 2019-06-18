@@ -8,7 +8,6 @@ incase the later steps need to be rerun at some point.
 """
 import boto3
 import tweepy
-import json
 from loguru import logger
 
 from django.utils import timezone
@@ -24,7 +23,6 @@ logger.add(f"logs/tweetpipe_{_log_file_name}.log", rotation="1 day")
 class Tweets:
     def __init__(self, username, count, storage_system):
         self._tweet_mode = "extended"
-        self._json_indent = 2  # Might want to move this to settings
         self._api = self._auth()
 
         self.username = username
@@ -36,8 +34,12 @@ class Tweets:
     def _auth(self):
         """Authenticate with Twitter and return a tweepy API inst."""
 
-        auth = tweepy.OAuthHandler(settings.TWITTER_CONSUMER_KEY, settings.TWITTER_CONSUMER_SECRET_KEY)
-        auth.set_access_token(settings.TWITTER_ACCESS_TOKEN, settings.TWITTER_SECRET_ACCESS_TOKEN)
+        auth = tweepy.OAuthHandler(
+            settings.TWITTER_CONSUMER_KEY, settings.TWITTER_CONSUMER_SECRET_KEY
+        )
+        auth.set_access_token(
+            settings.TWITTER_ACCESS_TOKEN, settings.TWITTER_SECRET_ACCESS_TOKEN
+        )
 
         return tweepy.API(auth)
 
@@ -53,13 +55,15 @@ class Tweets:
     def fetch(self):
         """Fetch the 'count' most recent tweets for 'username'"""
         fetched_at = timezone.now()
-        tweets = self.user.timeline(tweet_mode=self._tweet_mode, count=self.count)
+        tweets = self.user.timeline(
+            tweet_mode=self._tweet_mode, count=self.count
+        )
         self.fetched_at = fetched_at
         self.tweets = tweets
 
-    def convert_tweets_to_json(self):
-        """Convert tweet data and metadata to json"""
-        fetched_tweets = {
+    def enhance_data(self):
+        """Append metadata to dict and convert tweepy.tweet objs to dicts"""
+        enhanced_data = {
             "metadata": {
                 "fetched_at": utils.datetime_to_twitter_format(self.fetched_at),
                 "username": self.username,
@@ -68,12 +72,19 @@ class Tweets:
             "tweets": [],
         }
         for tweet in self.tweets:
-            fetched_tweets["tweets"].append(tweet._json)
+            # self.tweets is a list of tweepy.Tweet objects
+            # tweet._json returns the returned data as a dictionary
+            enhanced_data["tweets"].append(tweet._json)
 
-        fetched_tweets = json.dumps(fetched_tweets, indent=self._json_indent)
+        self.enhanced_data = enhanced_data
 
-        self.json_tweets = fetched_tweets
-        return fetched_tweets
+        return enhanced_data
+
+    def get_data(self):
+        if not self.fetched:
+            self.fetch()
+        enhanced_data = self.enhance_data()
+        return enhanced_data
 
     @property
     def filename(self):
@@ -82,7 +93,7 @@ class Tweets:
     def write(self):
         """Convinience method wrapping storage.write"""
         logger.debug(f"Write tweets to storage with filename {self.filename}.")
-        self.storage.write(self.filename, self.json_tweets)
+        self.storage.write(self.filename, self.enhanced_data)
 
 
 def get_tweet_data(username, count, storage_system):
@@ -96,9 +107,10 @@ def get_tweet_data(username, count, storage_system):
     If storage is set, store the raw file with appended
     metadata.
     """
-    tweets = Tweets(username=username, count=count, storage_system=storage_system)
-    tweets.fetch()
-    json_tweets = tweets.convert_tweets_to_json()
+    tweets = Tweets(
+        username=username, count=count, storage_system=storage_system
+    )
+    tweet_data = tweets.get_data()
     if storage_system:
         tweets.write()
-    return json_tweets
+    return tweet_data
