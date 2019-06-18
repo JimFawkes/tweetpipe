@@ -16,7 +16,7 @@ from loguru import logger
 
 import utils
 from core import ModelParser
-from models import FollowerCount, Tweet, User
+from models import FollowerCount, Hashtag, Tweet, User
 
 _log_file_name = __file__.split("/")[-1].split(".")[0]
 logger.add(f"logs/tweetpipe_{_log_file_name}.log", rotation="1 day")
@@ -26,7 +26,12 @@ class TweetPipeParser:
     def __init__(self, data):
         self.raw_tweets = data.pop("tweets")
         # This could be moved into a registered decorator
-        self.registered_parsers = [UserParser, TweetParser, FollowerCountParser]
+        self.registered_parsers = [
+            UserParser,
+            TweetParser,
+            FollowerCountParser,
+            HashtagParser,
+        ]
 
     def process(self):
         """Process the raw data and pass chunks onto the corresponding ModelParsers"""
@@ -100,6 +105,25 @@ class TweetParser(BaseModelParser):
         tweet_url = str(full_text[text_range[1] + 1 :])
         self.data["text"] = text
         self.data["tweet_url"] = tweet_url
+
+
+class HashtagParser(BaseModelParser):
+    def __init__(self, data):
+        self.data = data
+        self._model = Hashtag
+        self.relevant_fields = ["entities.hashtags"]
+        super().__init__()
+
+    def process(self):
+        self.pre_transformation_filter()
+        hashtags = []
+        for hashtag in self.data["hashtags"]:
+            fields = {"text": hashtag["text"], "tweet": None}
+            # Hack
+            fields["tweets"] = fields["tweet"]
+            hashtags.append(fields)
+
+        return {self._model: hashtags}
 
 
 def get_transformed_data(data):

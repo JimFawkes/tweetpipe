@@ -73,3 +73,12 @@ class FollowerCount(AbstractCountModel):
 
     class Meta:
         app_label = "tweetpipe"
+
+
+class Hashtag(models.Model):
+    req_fields = ("text",)
+    text = models.CharField(max_length=279)
+    tweets = models.ManyToManyField(Tweet, related_name="hashtags")
+
+    class Meta:
+        app_label = "tweetpipe"
