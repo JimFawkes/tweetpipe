@@ -3,7 +3,7 @@ Database models representing the different tables in the DB.
 
 Use the django ORM for its simplicity and the bundled schema migrations.
 
-First draft modeling the relevant data.
+Second draft modeling the relevant data.
 """
 from django.db import models
 
@@ -33,7 +33,9 @@ class User(models.Model):
 class Tweet(models.Model):
     id = models.BigIntegerField(primary_key=True)
     created_at = models.DateTimeField()
-    user = models.ForeignKey("User", on_delete=models.CASCADE, related_name="tweets")
+    user = models.ForeignKey(
+        "User", on_delete=models.CASCADE, related_name="tweets"
+    )
     # The full text may contain retweet information, the tweet itself and a url to the tweet.
     full_text = models.CharField(max_length=660)
     retweet_count = models.PositiveIntegerField()
@@ -54,3 +56,20 @@ class Tweet(models.Model):
     def __str__(self):
         return self.__repr__()
 
+
+class AbstractCountModel(models.Model):
+    count = models.IntegerField()
+    fetched_at = models.DateTimeField()
+
+    class Meta:
+        abstract = True
+
+
+class FollowerCount(AbstractCountModel):
+    req_fields = ("user", "fetched_at")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="follower_counts"
+    )
+
+    class Meta:
+        app_label = "tweetpipe"

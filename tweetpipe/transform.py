@@ -16,7 +16,7 @@ from loguru import logger
 
 import utils
 from core import ModelParser
-from models import User, Tweet
+from models import FollowerCount, Tweet, User
 
 _log_file_name = __file__.split("/")[-1].split(".")[0]
 logger.add(f"logs/tweetpipe_{_log_file_name}.log", rotation="1 day")
@@ -26,10 +26,10 @@ class TweetPipeParser:
     def __init__(self, data):
         self.raw_tweets = data.pop("tweets")
         # This could be moved into a registered decorator
-        self.registered_parsers = [UserParser, TweetParser]
+        self.registered_parsers = [UserParser, TweetParser, FollowerCountParser]
 
     def process(self):
-        """Process the raw data and pass chuncks onto the corresponding ModelParsers"""
+        """Process the raw data and pass chunks onto the corresponding ModelParsers"""
         clean_user = {}
         for idx, raw_tweet in enumerate(self.raw_tweets):
             transformed_tweet = {}
@@ -67,6 +67,19 @@ class UserParser(BaseModelParser):
         self.field_transformations = {"created_at": self.transform_datetime}
 
         super().__init__()
+
+
+class FollowerCountParser(BaseModelParser):
+    def __init__(self, data):
+        self.data = data
+        self._model = FollowerCount
+        self.relevant_fields = ["user.followers_count", "user"]
+        self.general_transformations = [self.transform_followers_count]
+
+        super().__init__()
+
+    def transform_followers_count(self):
+        self.data["count"] = self.data["followers_count"]
 
 
 class TweetParser(BaseModelParser):

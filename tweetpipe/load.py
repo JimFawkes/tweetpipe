@@ -17,7 +17,7 @@ from django.db import IntegrityError
 from loguru import logger
 
 import utils
-from models import User, Tweet
+from models import FollowerCount, Tweet, User
 
 
 _log_file_name = __file__.split("/")[-1].split(".")[0]
@@ -29,7 +29,7 @@ class Loader:
         self.data = data
         # TODO: While the data model changes, check  if there is a better ways of
         # dealing with dependencies and creation order
-        self.model_order = (User, Tweet)
+        self.model_order = (User, FollowerCount, Tweet)
         self.instances = {}
 
     def process(self):
@@ -84,7 +84,7 @@ class Loader:
 
 
 def load_data(transformed_data):
-    """Entry function to instanciate and process the Loader"""
+    """Entry function to instantiate and process the Loader"""
     for data in transformed_data:
         loader = Loader(data)
         try:
