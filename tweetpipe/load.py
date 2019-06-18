@@ -31,21 +31,45 @@ class Loader:
         # dealing with dependencies and creation order
         self.model_order = (User, FollowerCount, Tweet)
         self.instances = {}
+        self.dependents = {}
 
     def process(self):
         """Process the transformed data and store it in all relevant models"""
         for model in self.model_order:
-            fields = self.data[model]
+            _fields = self.data[model]
+            if isinstance(_fields, list):
+                for fields in _fields:
+                    self.get_instance(fields, model)
+            else:
+                self.get_instance(_fields, model)
+
+    def get_instance(self, fields, model):
+        dependents = self.get_dependents(fields, model)
+        fields = {**fields, **dependents}
+        model_inst = self.update_or_create(fields, model)
+        self.instances[self.get_model_name(model)] = model_inst
+
+    def get_dependents(self, fields, model):
+        """Extend fields with instances of dependent models"""
+
+        if not model in self.dependents:
+            self.dependents[model] = {}
             for dependent_name, dependent_inst in self.instances.items():
                 if dependent_name in fields:
-                    fields[dependent_name] = dependent_inst
-            model_inst = self.get_instance(model, fields)
-            self.instances[self.get_model_name(model)] = model_inst
+                    self.dependents[model][dependent_name] = dependent_inst
+
+        return self.dependents[model]
+
+    def filter_model_fields(self, fields, model):
+        """Filter out all fields necessary for this model"""
+        return utils.filter_dict(
+            fields, map(lambda x: x.name, model._meta.fields)
+        )
 
     def get_model_name(self, model):
         return model.__name__.lower()
 
-    def get_instance(self, model, fields):
+    def update_or_create(self, fields, model):
         """
         Update or Create a new instance of model
 
@@ -57,6 +81,7 @@ class Loader:
 
         """
 
+        fields = self.filter_model_fields(fields, model)
         required_fields = {}
         try:
             try:

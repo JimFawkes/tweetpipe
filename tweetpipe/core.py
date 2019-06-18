@@ -60,10 +60,6 @@ class ModelParser:
             )
             self.general_transformations = []
 
-        self._model_fields = set(
-            map(lambda x: x.name, self._model._meta.fields)
-        )
-
     def __repr__(self):
         return f"{self.__class__.__name__}(model='{self._model}')"
 
@@ -116,27 +112,13 @@ class ModelParser:
             self.data[field_name] = transformation(self.data[field_name])
 
     def run_general_transformations(self):
-        logger.debug(
-            f"RUN_GENERAL_TRANSFORMATIONS for GTs: {self.general_transformations}"
-        )
 
         for transformation in self.general_transformations:
             transformation()
-
-    def filter_model_fields(self):
-        """
-        Filter out all fields necessary for this model.
-
-        Add new attribute with all fields.
-
-        NOTE: How to cope with nested models?
-        """
-        return utils.filter_dict(self.data, self._model_fields)
 
     def process(self):
         """Run the field transformations and return the data in a processable format"""
         self.pre_transformation_filter()
         self.run_field_transformations()
         self.run_general_transformations()
-        fields = self.filter_model_fields()
-        return {self._model: fields}
+        return {self._model: self.data}
