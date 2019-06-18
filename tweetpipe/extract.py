@@ -63,18 +63,19 @@ class Tweets:
 
     def enhance_data(self):
         """Append metadata to dict and convert tweepy.tweet objs to dicts"""
-        enhanced_data = {
-            "metadata": {
-                "fetched_at": utils.datetime_to_twitter_format(self.fetched_at),
-                "username": self.username,
-                "count": self.count,
-            },
-            "tweets": [],
+
+        enhanced_data = {"tweets": []}
+        metadata = {
+            "fetched_at": utils.datetime_to_twitter_format(self.fetched_at),
+            "username": self.username,
+            "count": self.count,
         }
         for tweet in self.tweets:
             # self.tweets is a list of tweepy.Tweet objects
             # tweet._json returns the returned data as a dictionary
-            enhanced_data["tweets"].append(tweet._json)
+            tweet_dict = tweet._json
+            tweet_dict["tweetpipe_metadata"] = metadata
+            enhanced_data["tweets"].append(tweet_dict)
 
         self.enhanced_data = enhanced_data
 

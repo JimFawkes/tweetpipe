@@ -1,10 +1,16 @@
 """
-Transform the raw, extracted/loaded data.
-
-The TweetPipeParser takes the entire raw data and passes data chuncks to
-the corresponding ModelParsers.
+Transform the raw, extracted data.
 
 The machinery for the ModelParser can be found in core.py
+
+The top-level parser (TweetPipeParser) iterates through the tweets and passes
+the tweet dict to all individual parsers
+ObjParsers take the entire tweetdict (incl. tweetpipe_metadata) and do the following:
+  - create artificial fields
+  - reformat/filter dict to only contain relevant fields
+  - return dict {model_class: fields}
+TweetPipeParser then merges these dicts and returns a single dict.
+
 """
 from loguru import logger
 
@@ -18,25 +24,23 @@ logger.add(f"logs/tweetpipe_{_log_file_name}.log", rotation="1 day")
 
 class TweetPipeParser:
     def __init__(self, data):
-        self.metadata = data.pop("metadata")
         self.raw_tweets = data.pop("tweets")
+        # This could be moved into a registered decorator
+        self.registered_parsers = [UserParser, TweetParser]
 
     def process(self):
         """Process the raw data and pass chuncks onto the corresponding ModelParsers"""
         clean_user = {}
         for idx, raw_tweet in enumerate(self.raw_tweets):
-            user = raw_tweet.pop("user")
-            if idx == 0:
-                logger.debug(f"Start Processing a User")
-                parsed_user = UserParser(data={**user, **self.metadata})
-                clean_user = parsed_user.process()
+            transformed_tweet = {}
+            logger.debug(f"Start processing tweet idx={idx}")
+            for model_parser in self.registered_parsers:
+                # NOTE: This will parse user data for every tweet
+                parser = model_parser(data=raw_tweet)
+                parsed_data = parser.process()
+                transformed_tweet = {**transformed_tweet, **parsed_data}
 
-            raw_tweet = {**raw_tweet, **clean_user}
-
-            logger.debug(f"Processing Tweet idx={idx}")
-            parsed_tweet = TweetParser(data={**raw_tweet, **self.metadata})
-            clean_tweet = parsed_tweet.process()
-            yield clean_tweet
+            yield transformed_tweet
 
 
 class BaseModelParser(ModelParser):
@@ -44,11 +48,9 @@ class BaseModelParser(ModelParser):
 
     def __init__(self):
         super().__init__()
+        self.relevant_fields = ["tweetpipe_metadata.*"] + self.relevant_fields
         self.field_transformations = {
-            **{
-                "created_at": self.transform_datetime,
-                "fetched_at": self.transform_datetime,
-            },
+            **{"fetched_at": self.transform_datetime},
             **self.field_transformations,
         }
 
@@ -60,6 +62,9 @@ class UserParser(BaseModelParser):
     def __init__(self, data):
         self.data = data
         self._model = User
+        self.relevant_fields = ["user.*"]
+
+        self.field_transformations = {"created_at": self.transform_datetime}
 
         super().__init__()
 
@@ -68,18 +73,20 @@ class TweetParser(BaseModelParser):
     def __init__(self, data):
         self.data = data
         self._model = Tweet
+        self.relevant_fields = ["*"]
 
-        self.field_transformations = {"full_text": self.transform_full_text}
+        self.field_transformations = {"created_at": self.transform_datetime}
 
+        self.general_transformations = [self.transform_full_text]
         super().__init__()
 
-    def transform_full_text(self, full_text):
+    def transform_full_text(self):
+        full_text = self.data["full_text"]
         text_range = self.data["display_text_range"]
         text = str(full_text[text_range[0] : text_range[1]])
         tweet_url = str(full_text[text_range[1] + 1 :])
         self.data["text"] = text
         self.data["tweet_url"] = tweet_url
-        return str(full_text)
 
 
 def get_transformed_data(data):
