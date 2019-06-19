@@ -7,7 +7,7 @@
 
  - Persist the data.
 
- - Check your code into Github and sent the link before you come onside
+ - Check your code into Github and send the link before you come onside
 
 **Bonus:**
  - use an ORM
